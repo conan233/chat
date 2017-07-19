@@ -1,0 +1,136 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>websocket</title>
+</head>
+<body>
+	<input type="text" class="int">
+	<button onclick="sendmsg()">点击</button>
+</body>
+<script src="jquery-3.2.1.min.js"></script>
+<script type="text/javascript">
+	var ws=new WebSocket("ws://127.0.0.1:8888");
+	ws.onopen=function(){
+		console.log("连接成功")
+	}
+	ws.onmessage=function(data){
+		console.log(data.data)
+	}
+	function sendmsg(){
+		var msg=$(".int").val();
+		ws.send(msg)
+	}
+</script>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<style>
+       .chatList{
+       	 height: 200px;
+       	 border: 1px dashed pink;
+       	 margin-bottom: 10px;
+         overflow-y: scroll;
+
+       }
+       .hidden{
+       	display: none;
+       }
+       .right{
+          text-align: right;
+          color: red
+       }
+	</style>
+</head>
+<body>
+	<div class="container">
+		 <div class="loginBox form-group">
+		 	请输入别名：<input type="text" id="userName">
+		 	<button class="btn btn-success" id="login">进入聊天室</button>
+		 </div>
+         <div class="chatBox hidden">
+         	<div class="chatList">
+         		  
+         	</div>
+         	<textarea class="form-control" rows="3" placeholder="请输入..."></textarea>
+         	<button id="send" class="btn btn-primary btn-lg btn-block">发送</button>
+          <div class="alert alert-success hidden" role="alert"></div>
+         </div>
+	</div>
+</body>
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="/socket.io/socket.io.js"></script> 
+<!-- 这个是socket.io帮前端程序生成的客户端文件 -->
+<script>
+	
+	//前端要开始连接socket.io
+     var $userName = $("#userName"),
+	     $login = $("#login"),
+	     $alert = $(".alert"),
+	     $chatBox=$(".chatBox"),
+	     $loginBox = $(".loginBox"),
+   		 userName = "";
+	 var ws = io.connect("ws://127.0.0.1:8090");
+
+     //ws
+
+     $login.on('click',function(event) {
+     	  event.preventDefault();
+        
+        $chatBox.removeClass('hidden');
+        $loginBox.addClass('hidden');
+        userName = $userName.val();
+     	  ws.emit("login",$userName.val()) //前端发送ws消息的函数
+     });
+
+     //接受后台发过来的loginin 事件
+
+     ws.on('singin', function(data) {
+        console.log(data);
+     	$alert.removeClass("hidden");
+     	$alert.html(data+"加入聊天室");
+        setTimeout(function(){
+        	$alert.addClass("hidden");
+        },500)
+
+     });
+
+
+     $("#send").on('click',function(event) { //自己给别人发消息的时候
+        var value = $(".form-control").val();
+
+        if (!value) {
+           alert("总要输入点什么吧？");
+           return
+        };
+       
+        ws.emit("msg",{value,userName}); //就知道是谁在说
+        $(".form-control").val('');
+     });
+
+     //接受别人发来的消息
+
+
+     ws.on('message', function(data) {
+       //console.log(data);
+      var msgHtml = "<p>"+data.userName+"说："+data.value+"</p>";
+
+       if (data.userName == userName) { //自己在说
+          var msgHtml =  "<p class='right'>"+data.userName+"说："+data.value+"</p>";
+       };
+     
+        $(".chatList").append(msgHtml);
+
+        scrollBottom();
+     });
+
+      function scrollBottom(){
+          $('.chatList').scrollTop($(".chatList")[0].scrollHeight); 
+      }
+
+</script>
+</html>
